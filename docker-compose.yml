@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./backend
+    networks:
+      - crypto_app_network
+  frontend:
+    build: ./frontend
+    networks:
+      - crypto_app_network
+    ports:
+      - 5000:5000
+
+networks:
+  crypto_app_network:
