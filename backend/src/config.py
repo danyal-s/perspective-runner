@@ -8,7 +8,7 @@ class Config(object):
     TESTING = False
     CSRF_ENABLED = True
     BINANCE_API_SECRET = binance.API_SECRET
-    BINANCE_API_KEY = binance.API_SECRET
+    BINANCE_API_KEY = binance.API_KEY
 
 
 class ProductionConfig(Config):

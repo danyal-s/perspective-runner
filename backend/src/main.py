@@ -8,7 +8,7 @@ from binance.client import Client
 
 APP_CONFIG = None
 
-if os["APP_ENV"] in ("dev", "prod"):
+if os.environ.get(["APP_ENV"], "dev") in ("dev", "prod"):
     APP_CONFIG = config.DevelopmentConfig()
 
 b_client = Client(APP_CONFIG.API_KEY, APP_CONFIG.API_SECRET)
