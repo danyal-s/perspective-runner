@@ -3,6 +3,8 @@ services:
     build: ./backend
     networks:
       - crypto_app_network
+    ports:
+      - 5001:5001
   frontend:
     build: ./frontend
     networks:
