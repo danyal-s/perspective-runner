@@ -1,5 +1,5 @@
 import os
-import binance.config as binance
+import config_binance.config as binance
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -9,7 +9,7 @@ class Config(object):
     CSRF_ENABLED = True
     BINANCE_API_SECRET = binance.API_SECRET
     BINANCE_API_KEY = binance.API_SECRET
-    
+
 
 class ProductionConfig(Config):
     DEBUG = False
