@@ -1,2 +1,3 @@
-backend/src/binance/config.py
+./backend/src/binance
 .vscode
+.env
