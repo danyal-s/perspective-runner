@@ -6,7 +6,6 @@ WORKDIR /home/node/app
 COPY rollup.config.js .
 COPY package*.json .
 
-#RUN npm config set unsafe-perm true
 RUN npm install
 
 COPY ./src ./src
