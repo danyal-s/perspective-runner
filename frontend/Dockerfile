@@ -3,8 +3,8 @@ FROM node:15.11.0-buster
 RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
-COPY rollup.config.js .
-COPY package*.json .
+COPY webpack.config.js .
+COPY package.json .
 
 RUN npm install
 
