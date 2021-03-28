@@ -1,4 +1,5 @@
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 const path = require('path');
 
 const mode = process.env.NODE_ENV || 'development';
@@ -55,14 +56,19 @@ module.exports = {
 	plugins: [
 		new MiniCssExtractPlugin({
 			filename: '[name].css'
-		})
+		}),
+		new CopyPlugin({
+			patterns: [
+			  { from: "node_modules/bootstrap/dist/", to: "vendor/bootstrap" }
+			],
+		  })
 	],
 	devtool: prod ? false : 'source-map',
 	devServer: {
 		hot: true,
 		proxy: {
 			'/api': {
-			  target: `localhost:${process.env.BACKEND_API_PORT}`,
+			  target: `http://localhost:${process.env.BACKEND_API_PORT}`,
 			  secure: false,
 			}
 		}
