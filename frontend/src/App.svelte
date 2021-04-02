@@ -2,29 +2,43 @@
 	import { onMount, onDestroy } from "svelte";
 
 	export let name;
-	let scheduler = null;
+	let schedulers = [];
 	let binance_assets = null;
 	let pancake_lp = null;
+	let all_assets = null;
 
-	async function get_api_data () {
+	async function get_binance_data () {
 		var res = await fetch("api/binance_assets");
     	binance_assets = await res.json();
 		binance_assets = binance_assets["res"]
-		
-		res = await fetch("api/get_pancake_liquidity_pool");
+	}
+	
+	async function get_pancake_lp_data () {
+		var res = await fetch("api/get_pancake_liquidity_pool");
 		pancake_lp = await res.json();
 		pancake_lp = pancake_lp["res"]
 	}
 
+	async function get_all_data () {
+		var res = await fetch("api/get_total_assets");
+		all_assets = await res.json();
+		all_assets = all_assets["res"]
+	}
+
 	onMount(async () => {
-		get_api_data()
-		if (scheduler == null) {
-			scheduler = setInterval(get_api_data, 5000)
-		}
+		get_binance_data();
+		get_pancake_lp_data();
+		get_all_data();
+		schedulers.append(setInterval(get_binance_data, 5000))
+		schedulers.append(setInterval(get_pancake_lp_data, 5000))
+		schedulers.append(setInterval(get_all_data, 5000))
+		
 	})
 
-	onDestroy(() => clearInterval(scheduler));
- 
+	onDestroy(() => schedulers.forEach(element => {
+		clearInterval(element);
+	}));
+
 	
 
 </script>
@@ -37,7 +51,7 @@
         </ul>
 	</nav>
 	<section class="container-fluid">
-		{JSON.stringify(pancake_lp)}		
+		{JSON.stringify(all_assets)}		
 		
 	
 	<div class="row">
@@ -65,6 +79,7 @@
 			</table>
 		</div>
 		<div class="col-md-3">
+			<h2>Liquidity Pools</h2>
 			<div class="card text-white bg-primary mb-3" style="max-width: 18rem;">
 				<div class="card-header">Pancake Swap LP</div>
 				<div class="card-body">
@@ -87,11 +102,12 @@
 				</div>
 				  {#each pancake_lp.vaultStats as p}
 				  <div class="card text-white bg-dark mb-3" style="max-width: 18rem;">
-				  	<div class="card-header">{p.poolName}</div>
+				  	<div class="card-header">{p.poolName}<br/>Total Earned: ${p.totalEarnedFromRewards.toFixed(2)}</div>
+				  	
 					<div class="card-body">
 						<p class="card-text">{p.token0} count: {p.currentToken0Count.toFixed(6)}</p>
 						<p class="card-text">Change in count:  {(((p.currentToken0Count - p.depositToken0Count) / p.depositToken0Count)*100).toFixed(2)}%</p>
-						<p class="card-text">{p.token1} count: {p.currentToken1Count}</p>
+						<p class="card-text">{p.token1} count: {p.currentToken1Count.toFixed(6)}</p>
 						<p class="card-text">Change in count:  {(((p.currentToken1Count - p.depositToken1Count) / p.depositToken1Count)*100).toFixed(2)}%</p>
 						
 					</div>
@@ -102,6 +118,34 @@
 				{/if}
 				</div>
 			  </div>
+		</div>
+		<div class="col-md-4">
+			<h2>All Assets 
+				{#if all_assets != null}
+				(${all_assets.total_usd.toFixed(2)})
+				{/if}
+
+			</h2>
+			<table class="table table-dark">
+				<th>Symbol</th>
+				<th>Amount</th>
+				<th>USD Value of Token</th>
+				<th>USD Value Held</th>
+					{#if all_assets != null}
+						{#each Object.entries(all_assets.token_stats) as [token_name, token_stats]}
+						<tr>
+							<td>{token_name}</td>
+							<td>{token_stats.count}</td>
+							<td>${token_stats.current_price}</td>
+							<td>${(token_stats.count * token_stats.current_price).toFixed(2)}</td>
+						</tr>
+						{/each}
+					{:else}
+						<tr>
+							<td>Loading...</td>
+						</tr>
+					{/if}
+			</table>
 		</div>
 	</div>
 	<p></p>

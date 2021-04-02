@@ -114,9 +114,20 @@ def get_crypto_price(crypto_symbol, liquid_cond=None):
         liquid_cond = lambda crypto_symbol, x: crypto_symbol in x["symbol"] and (("USDC" in x["symbol"]) or ("USDT" in x["symbol"]))
 
     crypto_prices = get_all_crypto_prices()
-    price_data = float([x for x in crypto_prices if liquid_cond(crypto_symbol, x)][0]["price"])
+    found_price = [x for x in crypto_prices if liquid_cond(crypto_symbol, x)]
+    if len(found_price) == 0:
+        if crypto_symbol.startswith("W"):
+            found_price = [x for x in crypto_prices if liquid_cond(crypto_symbol[1:], x)]
+            if len(found_price) == 0:
+                price = None
+            else:
+                price = float(found_price[0]["price"])
+        else:
+            price = None
+    else:
+        price = float(found_price[0]["price"])
     
-    return price_data
+    return price
 
 
 def get_binance_cryptos():
@@ -188,7 +199,7 @@ def get_pancake_lp_stats():
     }
     return res
 
-
+# %%
 @api.route('/')
 class Hello(Resource):
     def get(self): 
@@ -199,6 +210,7 @@ class Hello(Resource):
 class GetBinanceAssets(Resource):
     def get(self):
         crypto_details = get_binance_assets()
+        crypto_details.sort(key=lambda x: x["amount_in_usd"], reverse=True)
         return {"res": crypto_details}
 
 
@@ -220,18 +232,53 @@ class GetPancakeLiquidityPool(Resource):
 @api.route("/get_total_assets")
 class GetTotalAssets(Resource):
     def get(self):
-        total_usd = 0
+        token_stats = {}
+
         bin_assets = get_binance_assets()
         for x in bin_assets:
-            total_usd += x["current_price"]
+            if x["asset"] not in token_stats.keys():
+                token_stats[x["asset"]] = {}
+            
+            token_stats[x["asset"]]["count"] = float(x["free"])
+            token_stats[x["asset"]]["current_price"] = float(x["current_price"])
+
         
         p_lp_stats = get_pancake_lp_stats()
+
+        get_from_bin = lambda token, binance_stats: [x["current_price"] for x in binance_stats if x["asset"] == token]
+        for v in p_lp_stats["vaultStats"]:
+            for t, n in zip((v["token0"], v["token1"]), (0, 1)):
+                t = v[f"token{n}"]
+                t_count = float(v[f"currentToken{n}Count"])
+                t_binstat = get_from_bin(t, bin_assets)
+                t_price =  t_binstat[0] if len(t_binstat) > 0 else get_crypto_price(t)
+                
+                if t not in token_stats.keys():
+                    token_stats[t] = {}
+                    token_stats[t]["count"] = 0
+                
+                if token_stats[t]["count"] is not None and t_price is not None:
+                    token_stats[t]["count"] += t_count
+                    token_stats[t]["current_price"] = t_price
+                    token_stats[t]["amount_in_usd"] = token_stats[t]["count"] * t_price
+                else:
+                    token_stats[t]["amount_in_usd"] = None
+    
+                logger.debug(token_stats)
         
-        return {"res": {"total_usd": total_usd}}
+        total_usd = 0
+        for k, v in token_stats.items():
+            total_usd += v["current_price"] * v["count"]
+
+        return {"res": {"total_usd": total_usd, "token_stats": token_stats}}
+
+
 
 
 def main():
-    app.run(host='0.0.0.0', port=APP_CONFIG.BACKEND_API_PORT, debug=True)
+    app.run(host=APP_CONFIG.BACKEND_API_IP, port=APP_CONFIG.BACKEND_API_PORT, debug=True)
 
 if __name__ == "__main__":
     main()
+# %%
+# TODO: https://www.blockchaincenter.net/altcoin-season-index/

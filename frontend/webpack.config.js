@@ -68,7 +68,7 @@ module.exports = {
 		hot: true,
 		proxy: {
 			'/api': {
-			  target: `http://localhost:${process.env.BACKEND_API_PORT}`,
+			  target: `http://${process.env.BACKEND_API_IP}:${process.env.BACKEND_API_PORT}`,
 			  secure: false,
 			}
 		}
