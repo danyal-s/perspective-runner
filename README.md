@@ -7,3 +7,7 @@ is provided as an example to set your own environment.
 ### Binance:
     - BINANCE_API_KEY
     - BINANCE_API_SECRET
+
+
+### Running the Application
+Execute build.sh, then run.sh.

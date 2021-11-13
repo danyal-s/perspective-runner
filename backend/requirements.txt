@@ -1,4 +1,0 @@
-python-binance
-TA-Lib
-flask
-flask_restx
